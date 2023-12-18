@@ -2,11 +2,11 @@ import {
   RouterProvider,
   createBrowserRouter
 } from "react-router-dom";
-import Game from "./routes/game";
 import React from "react";
 import ReactDOM from "react-dom/client";
+import Game from "./routes/game";
 import Home from "./routes/home";
-
+import EndGame from "./routes/endgame";
 
 const router = createBrowserRouter([
   { 
@@ -16,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: "/game",
     element: <Game />,
+  },
+  {
+    path: "/endgame/:timelapsed",
+    element: <EndGame />,
   },
 ]);
 

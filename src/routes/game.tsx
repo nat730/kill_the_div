@@ -3,7 +3,7 @@ import "../Game.css";
 import { useNavigate } from "react-router-dom";
 // @ts-ignore
 import { useSound } from "use-sound";
-import clickSound from '/home/nat/dev/kill_the_div/public/sound/Pig.mp3';
+import clickSound from '/sound/Pig.mp3';
 
 const getRandomPosition = () => ({
   top: Math.random() * 95 + "%",

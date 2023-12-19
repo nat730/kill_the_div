@@ -1,19 +1,19 @@
-import { useState, useEffect } from "react";
-import "../Game.css";
+import { useState, useEffect, useMemo } from "react";
+import "../Game.scss";
 import { useNavigate } from "react-router-dom";
 // @ts-ignore
 import { useSound } from "use-sound";
 import clickSound from '/sound/Pig.mp3';
 
 const getRandomPosition = () => ({
-  top: Math.random() * 95 + "%",
-  left: Math.random() * 95 + "%",
+  top: Math.random() * 100 + "%",
+  left: Math.random() * 100 + "%",
 });
 
 const Game = () => {
   const [divsClicked, setDivsClicked] = useState(0);
-  const [_, setStartTime] = useState(0);
-  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [startTime, setStartTime] = useState(Date.now());
+  const [ping, refresh] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [position, setPosition] = useState(getRandomPosition());
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | undefined>(undefined);
@@ -21,77 +21,62 @@ const Game = () => {
   const [playClickSound] = useSound(clickSound);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [accumulator, setaccumulator] = useState(0);
 
-
+  const timerValue = useMemo(() => {
+    const delta = accumulator + (isPaused ? 0 : (Date.now() - startTime) / 1000)
+    return parseFloat(delta.toFixed(3))
+  }, [ping, startTime, isPaused])
 
   useEffect(() => {
-    if (divsClicked === 0) {
-      setStartTime(Date.now());
-
-      if ("vibrate" in navigator) {
-        navigator.vibrate(200);
-      }
-
-      setIntervalId(setInterval(() => {
-        setStartTime((prevStartTime) => {
-          const elapsedSeconds = (Date.now() - prevStartTime) / 1000;
-          setTimeElapsed(Number(elapsedSeconds.toFixed(3)));
-          return prevStartTime;
-        });
-      }, 100));
-    }
-  }, [divsClicked]);
+    setIntervalId(setInterval(() => {
+      refresh(Math.random())
+    }, 120));
+  }, [])
 
   useEffect(() => {
     if (divsClicked === 10) {
       setGameOver(true);
       clearInterval(intervalId);
 
-      if ("Notification" in window) {
+      if (window.Notification) {
         Notification.requestPermission().then((permission) => {
           if (permission === "granted") {
             new Notification("Jeu terminé", {
-              body: `Temps écoulé: ${timeElapsed} sec`,
+              body: `Temps écoulé: ${timerValue} sec`,
             });
           }
         });
       }
 
       const bestScore = localStorage.getItem("bestScore");
-      if (!bestScore || parseFloat(bestScore) < timeElapsed) {
-        localStorage.setItem("bestScore", timeElapsed.toString());
+      if (!bestScore || parseFloat(bestScore) > timerValue) {
+        localStorage.setItem("bestScore", timerValue.toString());
       }
 
-      navigate("/endgame/" + timeElapsed);
+      navigate("/endgame/" + timerValue);
     }
-  }, [divsClicked, timeElapsed, intervalId, navigate]);
+  }, [divsClicked, timerValue, intervalId, navigate]);
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | undefined;
-
-    const handleInterval = () => {
-      setStartTime((prevStartTime) => {
-        const elapsedSeconds = (Date.now() - prevStartTime) / 1000;
-        setTimeElapsed(Number(elapsedSeconds.toFixed(3)));
-        return prevStartTime;
-      });
-    };
-    
-    if (!isPaused) {
-      intervalId = setInterval(handleInterval, 100);
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState !== "visible") {
+      setIsPaused(true);
+      handlePauseResumeClick()
     }
+  });
 
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isPaused]); 
-
+  
   const handlePauseResumeClick = () => {
-    setIsPaused(!isPaused);
+    if (isPaused) {
+      setStartTime(Date.now())
+      setIsPaused(false)
+    }
+    else {
+      setIsPaused(true)
+      setaccumulator(timerValue)
+      setInterval(clearInterval);
+    }
   };
-
 
   const handleFullscreenClick = () => {
     const element = document.documentElement;
@@ -120,110 +105,72 @@ const Game = () => {
 
   const handleInstallClick = () => {
     if (window.matchMedia("(display-mode: standalone)").matches) {
-      console.log("Le jeu est déjà installé en mode standalone.");
+      console.log("Le jeu est déjà installé.");
       //@ts-ignore
     } else if (window.navigator.standalone) {
       console.log("Le jeu est déjà installé sur iOS.");
     } else {
-      installApp();
+      console.log("Installer le jeu...");
     }
   };
-
-  const installApp = () => {
-      if (confirm("Installer le jeu?")) {
-      addToHomeScreen();
-    }
-  };
-  
-
-  const addToHomeScreen = () => {
-    const link = document.createElement("link");
-    link.rel = "apple-touch-icon";
-    link.href = "/path/to/icon.png";
-    document.head.appendChild(link);
-      const manifest = {
-      short_name: "Nom Court",
-      name: "Nom Complet",
-      icons: [
-        {
-          src: "/assets/icons",
-          sizes: "192x192",
-          type: "image/png",
-        },
-      ],
-      start_url: "/",
-      display: "standalone",
-      background_color: "#ffffff",
-      theme_color: "#000000",
-    };
-  
-    const jsonManifest = JSON.stringify(manifest);
-    const blob = new Blob([jsonManifest], { type: "application/json" });
-    const manifestFile = URL.createObjectURL(blob);
-  
-    const manifestLink = document.createElement("link");
-    manifestLink.rel = "manifest";
-    manifestLink.href = manifestFile;
-    document.head.appendChild(manifestLink);
-  
-    console.log("Le jeu a été ajouté à l'écran d'accueil.");
-  };
-  
-  
 
   const handleDivClick = () => {
-    setDivsClicked(divsClicked + 1);
-    setPosition(getRandomPosition());
-    playClickSound();
-    navigator.vibrate(200);
+    if (!isPaused) {
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+      setDivsClicked(divsClicked + 1);
+      setPosition(getRandomPosition());
+      playClickSound();
+    } 
   };
+  
 
   const handleReplayClick = () => {
     setDivsClicked(0);
     setStartTime(Date.now());
-    setTimeElapsed(0);
     setGameOver(false);
   };
 
-
-
   return (
-    <div className="game-container">
-      <h1>Jeu</h1>
-      <div className="info-container">
-        <p>Divs cliquées: {divsClicked}</p>
-        <p>Chrono: {timeElapsed} sec</p>
-      </div>
-      <button onClick={handleShareClick}>Share</button>
-      <button onClick={handleInstallClick}>Install</button>
-      <button onClick={handlePauseResumeClick}>
-        {isPaused ? "Resume" : "Pause"}
-      </button>
-      <button onClick={isFullscreen ? handleExitFullscreenClick : handleFullscreenClick}>
-        {isFullscreen ? "Remove Fullscreen" : "Fullscreen"}
-      </button>
-      
-
-
-      {!gameOver ? (
-        <img
-          id="clickable-div"
-          src="/image_game/test.jpg"
-          alt="Clickable Image"
-          onClick={handleDivClick}
-          className="clickable-div"
-          style={position}
-        />
-      ) : (
-        <div>
-          <h2>Partie terminée</h2>
-          <p>Temps écoulé: {timeElapsed} sec</p>
-          <p>Meilleur score: {localStorage.getItem("bestScore")} sec</p>
-          <button onClick={handleReplayClick}>Rejouer</button>
+    <div className="outer-container">
+      <div className="game-container">
+        <h1>Jeu</h1>
+        <div className="info-container">
+          <p>Divs cliquées: {divsClicked}</p>
+          <p>Chrono: {timerValue} sec</p>
         </div>
-      )}
+        <button onClick={handleShareClick}>Share</button>
+        <button onClick={handleInstallClick}>Install</button>
+        <button onClick={handlePauseResumeClick}>
+          {isPaused ? "Resume" : "Pause"}
+        </button>
+        <button onClick={isFullscreen ? handleExitFullscreenClick : handleFullscreenClick}>
+          {isFullscreen ? "Remove Fullscreen" : "Fullscreen"}
+        </button>
+  
+        {!gameOver ? (
+          <div className="inner-container">
+            <img
+              id="clickable-div"
+              src="/image_game/test.jpg"
+              alt="Clickable Image"
+              onClick={handleDivClick}
+              className="clickable-div"
+              style={position}
+            />
+          </div>
+        ) : (
+          <div className="inner-container">
+            <h2>Partie terminée</h2>
+            <p>Temps écoulé: {timerValue} sec</p>
+            <p>Meilleur score: {localStorage.getItem("bestScore")} sec</p>
+            <button onClick={handleReplayClick}>Rejouer</button>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  );    
 };
 
 export default Game;

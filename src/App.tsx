@@ -29,7 +29,7 @@ if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <RouterProvider router={router} />
-      <SpeedInsights />
+      <SpeedInsights /> 
     </React.StrictMode>
   );
 }

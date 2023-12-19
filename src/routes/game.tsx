@@ -74,8 +74,8 @@ const Game = () => {
     else {
       setIsPaused(true)
       setaccumulator(timerValue)
-      setInterval(clearInterval);
-    }
+      clearInterval(intervalId);
+        }
   };
 
   const handleFullscreenClick = () => {

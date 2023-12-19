@@ -6,8 +6,8 @@ import { useSound } from "use-sound";
 import clickSound from '/sound/Pig.mp3';
 
 const getRandomPosition = () => ({
-  top: Math.random() * 100 + "%",
-  left: Math.random() * 100 + "%",
+  top: Math.random() * 90 + "%",
+  left: Math.random() * 90   + "%",
 });
 
 const Game = () => {

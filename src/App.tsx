@@ -7,6 +7,7 @@ import ReactDOM from "react-dom/client";
 import Game from "./routes/game";
 import Home from "./routes/home";
 import EndGame from "./routes/endgame";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const router = createBrowserRouter([
   { 
@@ -28,6 +29,7 @@ if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <RouterProvider router={router} />
+      <SpeedInsights />
     </React.StrictMode>
   );
 }

@@ -99,18 +99,7 @@ const Game = () => {
         title: "Jouez à ce super jeu!",
         text: "Venez battre mon meilleur score!",
         url: window.location.href,
-      });
-    }
-  };
-
-  const handleInstallClick = () => {
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      console.log("Le jeu est déjà installé.");
-      //@ts-ignore
-    } else if (window.navigator.standalone) {
-      console.log("Le jeu est déjà installé sur iOS.");
-    } else {
-      console.log("Installer le jeu...");
+      }); 
     }
   };
 
@@ -141,7 +130,6 @@ const Game = () => {
           <p>Chrono: {timerValue} sec</p>
         </div>
         <button onClick={handleShareClick}>Share</button>
-        <button onClick={handleInstallClick}>Install</button>
         <button onClick={handlePauseResumeClick}>
           {isPaused ? "Resume" : "Pause"}
         </button>

@@ -8,6 +8,7 @@ import Game from "./routes/game";
 import Home from "./routes/home";
 import EndGame from "./routes/endgame";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import TargetGame from "./routes/cible";
 
 const router = createBrowserRouter([
   { 
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
     path: "/endgame/:timelapsed",
     element: <EndGame />,
   },
+  {
+    path: "/target",
+    element: <TargetGame />,
+  }
 ]);
 
 const rootElement = document.getElementById("root");
